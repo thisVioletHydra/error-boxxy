@@ -18,3 +18,7 @@ VS Code squiggles are a dare: find the red worm in 400 lines of dark theme. **Er
 
 - `Error Boxxy: Hide Default Squiggles`
 - `Error Boxxy: Restore Default Squiggles`
+
+## License
+
+MIT. See [LICENSE](LICENSE).
