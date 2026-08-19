@@ -1,42 +1,92 @@
 {
   "name": "error-boxxy",
   "displayName": "Error Boxxy",
-  "description": "Рамка и фон на ошибках и варнингах вместо волнистой линии",
-  "version": "0.0.1",
+  "description": "Old-school boxes around errors and warnings. No more hunting for a one-pixel squiggle.",
+  "version": "0.0.2",
   "publisher": "Roman",
   "license": "MIT",
+  "icon": "images/icon.png",
+  "homepage": "https://github.com/thisVioletHydra/error-boxxy",
+  "bugs": {
+    "url": "https://github.com/thisVioletHydra/error-boxxy/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thisVioletHydra/error-boxxy"
+    "url": "https://github.com/thisVioletHydra/error-boxxy.git"
   },
   "engines": {
-    "vscode": "^1.134.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Linters"
   ],
+  "keywords": [
+    "error",
+    "warning",
+    "diagnostics",
+    "highlight",
+    "squiggle",
+    "old-school"
+  ],
+  "galleryBanner": {
+    "color": "#1b1e28",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "errorBoxxy.hideSquiggles",
+        "title": "Error Boxxy: Hide Default Squiggles"
+      },
+      {
+        "command": "errorBoxxy.restoreSquiggles",
+        "title": "Error Boxxy: Restore Default Squiggles"
+      }
+    ],
     "configuration": {
       "title": "Error Boxxy",
       "properties": {
         "errorBoxxy.hideSquiggles": {
           "type": "boolean",
           "default": true,
-          "description": "Прятать стандартные волнистые подчёркивания"
+          "description": "Hide VS Code squiggles via workbench.colorCustomizations"
+        },
+        "errorBoxxy.errorBorder": {
+          "type": "string",
+          "default": "1px solid #e74c3c",
+          "description": "CSS border for errors"
+        },
+        "errorBoxxy.errorBackground": {
+          "type": "string",
+          "default": "rgba(255, 100, 135, 0.09)",
+          "description": "Background fill for errors"
+        },
+        "errorBoxxy.warningBorder": {
+          "type": "string",
+          "default": "1px solid #ffcf70a8",
+          "description": "CSS border for warnings"
+        },
+        "errorBoxxy.warningBackground": {
+          "type": "string",
+          "default": "rgba(255, 155, 0, 0.09)",
+          "description": "Background fill for warnings"
         }
       }
     }
   },
   "scripts": {
     "compile": "tsc -p .",
-    "vscode:prepublish": "npm run compile"
+    "lint": "oxlint src",
+    "vscode:prepublish": "pnpm run compile"
   },
   "devDependencies": {
     "@types/vscode": "^1.96.0",
+    "oxlint": "^1.26.0",
     "typescript": "^5.7.3"
   }
 }

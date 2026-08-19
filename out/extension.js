@@ -44,17 +44,32 @@ const SQUIGGLE_KEYS = [
 ];
 const SQUIGGLE_OFF = '#00000000';
 const STATE_KEY = 'errorBoxxy.prevSquiggleColors';
-const errorDeco = vscode.window.createTextEditorDecorationType({
-    border: '1px solid #e74c3c',
-    borderRadius: '3px',
-    backgroundColor: 'rgba(255, 100, 135, 0.09)',
-});
-const warnDeco = vscode.window.createTextEditorDecorationType({
-    border: '1px solid #ffcf70a8',
-    borderRadius: '3px',
-    backgroundColor: 'rgba(255, 155, 0, 0.09)',
-});
-function paint(editor) {
+function readStyle() {
+    const cfg = vscode.workspace.getConfiguration('errorBoxxy');
+    return {
+        hideSquiggles: cfg.get('hideSquiggles', true),
+        errorBorder: cfg.get('errorBorder', '1px solid #e74c3c'),
+        errorBackground: cfg.get('errorBackground', 'rgba(255, 100, 135, 0.09)'),
+        warningBorder: cfg.get('warningBorder', '1px solid #ffcf70a8'),
+        warningBackground: cfg.get('warningBackground', 'rgba(255, 155, 0, 0.09)'),
+    };
+}
+function createDecos() {
+    const style = readStyle();
+    return {
+        error: vscode.window.createTextEditorDecorationType({
+            border: style.errorBorder,
+            borderRadius: '3px',
+            backgroundColor: style.errorBackground,
+        }),
+        warn: vscode.window.createTextEditorDecorationType({
+            border: style.warningBorder,
+            borderRadius: '3px',
+            backgroundColor: style.warningBackground,
+        }),
+    };
+}
+function paint(editor, decos) {
     const diags = vscode.languages.getDiagnostics(editor.document.uri);
     const errors = [];
     const warns = [];
@@ -66,21 +81,18 @@ function paint(editor) {
             warns.push(d.range);
         }
     }
-    editor.setDecorations(errorDeco, errors);
-    editor.setDecorations(warnDeco, warns);
+    editor.setDecorations(decos.error, errors);
+    editor.setDecorations(decos.warn, warns);
 }
-function paintAll() {
+function paintAll(decos) {
     for (const editor of vscode.window.visibleTextEditors) {
-        paint(editor);
+        paint(editor, decos);
     }
 }
 async function hideSquiggles(ctx) {
-    if (!vscode.workspace.getConfiguration('errorBoxxy').get('hideSquiggles', true)) {
-        return;
-    }
     const cfg = vscode.workspace.getConfiguration('workbench');
     const colors = {
-        ...(cfg.get('colorCustomizations') ?? {}),
+        ...cfg.get('colorCustomizations'),
     };
     const prev = ctx.globalState.get(STATE_KEY) ?? {};
     for (const key of SQUIGGLE_KEYS) {
@@ -99,7 +111,7 @@ async function restoreSquiggles(ctx) {
     }
     const cfg = vscode.workspace.getConfiguration('workbench');
     const colors = {
-        ...(cfg.get('colorCustomizations') ?? {}),
+        ...cfg.get('colorCustomizations'),
     };
     for (const key of SQUIGGLE_KEYS) {
         const old = prev[key];
@@ -113,23 +125,39 @@ async function restoreSquiggles(ctx) {
     await cfg.update('colorCustomizations', colors, vscode.ConfigurationTarget.Global);
     await ctx.globalState.update(STATE_KEY, undefined);
 }
-let extensionCtx;
 function activate(ctx) {
-    extensionCtx = ctx;
-    ctx.subscriptions.push(errorDeco, warnDeco);
-    ctx.subscriptions.push(vscode.languages.onDidChangeDiagnostics(paintAll));
-    ctx.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(paintAll));
+    let decos = createDecos();
+    ctx.subscriptions.push(decos.error, decos.warn);
+    const repaint = () => paintAll(decos);
+    ctx.subscriptions.push(vscode.languages.onDidChangeDiagnostics(repaint));
+    ctx.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(repaint));
     ctx.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (editor) {
-            paint(editor);
+            paint(editor, decos);
         }
     }));
-    void hideSquiggles(ctx);
-    paintAll();
+    ctx.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
+        if (!e.affectsConfiguration('errorBoxxy')) {
+            return;
+        }
+        decos.error.dispose();
+        decos.warn.dispose();
+        decos = createDecos();
+        ctx.subscriptions.push(decos.error, decos.warn);
+        void syncSquiggles(ctx);
+        paintAll(decos);
+    }));
+    ctx.subscriptions.push(vscode.commands.registerCommand('errorBoxxy.hideSquiggles', () => hideSquiggles(ctx)));
+    ctx.subscriptions.push(vscode.commands.registerCommand('errorBoxxy.restoreSquiggles', () => restoreSquiggles(ctx)));
+    void syncSquiggles(ctx);
+    paintAll(decos);
 }
-function deactivate() {
-    if (extensionCtx) {
-        void restoreSquiggles(extensionCtx);
+async function syncSquiggles(ctx) {
+    if (readStyle().hideSquiggles) {
+        await hideSquiggles(ctx);
+        return;
     }
+    await restoreSquiggles(ctx);
 }
+function deactivate() { }
 //# sourceMappingURL=extension.js.map
