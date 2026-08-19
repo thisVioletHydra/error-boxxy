@@ -1,0 +1,42 @@
+{
+  "name": "error-boxxy",
+  "displayName": "Error Boxxy",
+  "description": "Рамка и фон на ошибках и варнингах вместо волнистой линии",
+  "version": "0.0.1",
+  "publisher": "Roman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thisVioletHydra/error-boxxy"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Error Boxxy",
+      "properties": {
+        "errorBoxxy.hideSquiggles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Прятать стандартные волнистые подчёркивания"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.96.0",
+    "typescript": "^5.7.3"
+  }
+}
